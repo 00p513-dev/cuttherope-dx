@@ -152,8 +152,62 @@ jobs:
                   compression-level: 0
                   retention-days: 7
 
+    snap-arm64:
+        needs: [version, assets]
+        runs-on: ubuntu-24.04-arm # Needs to match snap core version for AOT
+        steps:
+            - uses: actions/checkout@v7
+            - uses: ./.github/actions/setup-dotnet
+            - uses: ./.github/actions/setup-snapcraft
+
+            # The publish deploys content straight from content/, and fetches anything
+            # missing on its own. Restoring what the assets job already downloaded is
+            # purely to skip that download; a miss costs time, not correctness.
+            - name: Restore fetched assets
+              uses: actions/cache/restore@v6
+              with:
+                  path: ${{ needs.assets.outputs.cache-path }}
+                  key: ${{ needs.assets.outputs.cache-key }}
+                  enableCrossOsArchive: true
+
+            - run: sg lxd -c './distribution/build_snap.sh "${{ needs.version.outputs.version }}" arm64'
+
+            - uses: actions/upload-artifact@v7
+              with:
+                  name: bundle-snap-arm64
+                  path: src/CutTheRopeDX.Desktop/bin/release_github/*arm64.snap
+                  compression-level: 0
+                  retention-days: 7
+
+    snap-amd64:
+        needs: [version, assets]
+        runs-on: ubuntu-24.04 # Needs to match snap core version for AOT
+        steps:
+            - uses: actions/checkout@v7
+            - uses: ./.github/actions/setup-dotnet
+            - uses: ./.github/actions/setup-snapcraft
+
+            # The publish deploys content straight from content/, and fetches anything
+            # missing on its own. Restoring what the assets job already downloaded is
+            # purely to skip that download; a miss costs time, not correctness.
+            - name: Restore fetched assets
+              uses: actions/cache/restore@v6
+              with:
+                  path: ${{ needs.assets.outputs.cache-path }}
+                  key: ${{ needs.assets.outputs.cache-key }}
+                  enableCrossOsArchive: true
+
+            - run: sg lxd -c './distribution/build_snap.sh "${{ needs.version.outputs.version }}" amd64'
+
+            - uses: actions/upload-artifact@v7
+              with:
+                  name: bundle-snap-amd64
+                  path: src/CutTheRopeDX.Desktop/bin/release_github/*amd64.snap
+                  compression-level: 0
+                  retention-days: 7
+
     release:
-        needs: [version, windows, macos, linux]
+        needs: [version, windows, macos, linux, snap-arm64, snap-amd64]
         runs-on: ubuntu-latest
         permissions:
             contents: write

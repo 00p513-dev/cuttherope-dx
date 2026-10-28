@@ -1,0 +1,35 @@
+name: {{APP_NAME}}
+title: {{APP_DISPLAY_NAME}}
+version: '{{VERSION}}'
+summary: {{DESCRIPTION}}
+description: |
+  {{DESCRIPTION}}
+source-code: https://github.com/yell0wsuit/cuttherope-dx/
+base: core24
+grade: stable
+confinement: strict
+icon: snap/gui/{{APP_NAME}}.png
+
+platforms:
+  amd64:
+    build-on: [amd64, arm64]
+    build-for: [amd64]
+  arm64:
+    build-on: [amd64, arm64]
+    build-for: [arm64]
+
+apps:
+  {{APP_NAME}}:
+    command: bin/launcher
+    # The gnome extension supplies the desktop/x11/wayland/opengl plugs, the
+    # mesa/graphics libraries, and the fontconfig + LD_LIBRARY_PATH setup.
+    extensions: [gnome]
+    plugs:
+      - audio-playback
+
+parts:
+  game:
+    plugin: dump
+    source: app
+    stage-packages:
+      - libfontconfig1

@@ -1,0 +1,25 @@
+name: Set up snapcraft
+description: Install snapcraft and LXD, and make LXD usable by the runner user
+
+runs:
+    using: composite
+    steps:
+        - name: Install snapcraft and LXD
+          shell: bash
+          run: |
+              sudo snap install snapcraft --classic
+              sudo snap install lxd || sudo snap refresh lxd
+              sudo lxd init --auto
+              sudo usermod -aG lxd "$USER"
+
+        # Docker's iptables rules on the runner block traffic from LXD containers, so
+        # the build container can't reach the network (apt, etc.) without this.
+        - name: Allow LXD container networking
+          shell: bash
+          run: |
+              sudo iptables -I DOCKER-USER -j ACCEPT
+              sudo ip6tables -I DOCKER-USER -j ACCEPT || true
+
+        - name: Install AOT prerequisites
+          shell: bash
+          run: sudo apt-get install -y clang zlib1g-dev
